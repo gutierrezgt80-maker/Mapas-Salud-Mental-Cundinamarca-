@@ -257,7 +257,7 @@ paths.on('mousemove', function(event, f) {
   tooltip.style.top = (event.offsetY + 10) + 'px';
   tooltip.innerHTML = `
     <b>${d.municipio}</b>
-    <div style="color:#b8c4d0;font-size:.68rem;margin-top:1px">${d.provincia} · ${d.region_salud.charAt(0)+d.region_salud.slice(1).toLowerCase()}</div>
+    <div style="color:#b8c4d0;font-size:.68rem;margin-top:1px">${d.region_salud.charAt(0)+d.region_salud.slice(1).toLowerCase()} · ${d.provincia}</div>
     <div class="row"><span>Casos</span><span>${a.casos}</span></div>
     <div class="row"><span>Población</span><span>${a.poblacion.toLocaleString('es-CO')}</span></div>
     <div class="row"><span>Tasa municipio</span><span>${a.tasa_municipio}</span></div>
