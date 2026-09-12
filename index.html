@@ -151,8 +151,12 @@ const _PAD = 10;
 const _dx = _maxLon - _minLon;
 const _dy = _maxLat - _minLat;
 const _scale = Math.min((width - 2 * _PAD) / _dx, (height - 2 * _PAD) / _dy);
+const _renderedW = _dx * _scale;
+const _renderedH = _dy * _scale;
+const _offsetX = _PAD + (width - 2 * _PAD - _renderedW) / 2;
+const _offsetY = _PAD + (height - 2 * _PAD - _renderedH) / 2;
 function _project(lon, lat) {
-  return [ (lon - _minLon) * _scale + _PAD, (_maxLat - lat) * _scale + _PAD ];
+  return [ (lon - _minLon) * _scale + _offsetX, (_maxLat - lat) * _scale + _offsetY ];
 }
 function _ringPath(ring) {
   return 'M' + ring.map(p => { const xy = _project(p[0], p[1]); return xy[0].toFixed(2) + ',' + xy[1].toFixed(2); }).join('L') + 'Z';
