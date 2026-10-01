@@ -7,7 +7,7 @@
 .wrap{max-width:980px;margin:0 auto;padding:20px 20px 28px}
 .header{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-deep) 100%);border-radius:10px;padding:18px 22px;color:#fff;margin-bottom:16px}
 .header h1{margin:0 0 4px;font-size:1.15rem;font-weight:700}.header p{margin:0;font-size:.8rem;opacity:.85}
-.controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px}.fld{display:flex;flex-direction:column;gap:4px}.fld label{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
 select{border:1px solid #d7dce1;border-radius:8px;padding:8px 10px;font-size:.8rem;font-weight:600;color:var(--ink);background:#fff;max-width:100%}
 .card{background:#fff;border-radius:10px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 svg{width:100%;height:auto;display:block}
@@ -19,9 +19,11 @@ svg{width:100%;height:auto;display:block}
 </style></head><body><div class="wrap">
 <div class="header"><h1>Pirámide de la conducta suicida</h1>
 <p>Muertes por suicidio (DANE EEVV) e intentos notificados (SIVIGILA 356) — municipio de residencia, Cundinamarca</p></div>
-<div class="controls"><select id="per"></select><select id="terr"></select>
-<select id="sex"><option>Total</option><option>Hombre</option><option>Mujer</option></select>
-<select id="edad"><option value="Todos">Todas las edades</option><option>5-14 años</option><option>15-44 años</option><option>45-64 años</option><option>65 y más</option></select></div>
+<div class="controls">
+<div class="fld"><label for="per">Periodo</label><select id="per"></select></div>
+<div class="fld"><label for="terr">Territorio</label><select id="terr"></select></div>
+<div class="fld"><label for="sex">Sexo</label><select id="sex"><option value="Total">Ambos sexos</option><option value="Hombre">Hombre</option><option value="Mujer">Mujer</option></select></div>
+<div class="fld"><label for="edad">Rango de edad</label><select id="edad"><option value="Todos">Todas las edades</option><option>5-14 años</option><option>15-44 años</option><option>45-64 años</option><option>65 y más</option></select></div></div>
 <div class="card"><svg viewBox="0 0 700 300" id="pyr"></svg><div class="aviso" id="aviso">Pocas muertes en esta selección: la razón es inestable, interpretar con cautela.</div></div>
 <div class="cmp" id="cmp"></div>
 <div class="footnote">Comparación de casos registrados, no seguimiento de personas: no se sabe si quien murió tuvo un intento notificado.
