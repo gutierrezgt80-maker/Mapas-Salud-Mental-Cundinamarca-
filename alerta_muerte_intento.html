@@ -98,6 +98,7 @@ function path(feature) {
 
 const $ = id => document.getElementById(id);
 const fmt = n => n.toLocaleString('es-CO');
+const dec = x => x.toLocaleString('es-CO',{minimumFractionDigits:2,maximumFractionDigits:2});
 PER.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=ETIQ[p]||p;if(p===cur)o.selected=true;$('per').appendChild(o);});
 const svg = d3.select('#map');
 const paths = svg.selectAll('path').data(GEO.features).join('path').attr('class','mun').attr('d', path);
@@ -111,9 +112,9 @@ function render(){
   const lista=$('lista').value; const enLista = c => lista==='0' || (lista==='12' ? c<=2 : String(c)===lista);
   paths.attr('fill', f => { const e=estado[f.properties.codigo]; return e?CAT[e[2]][1]:'#eee'; })
        .classed('dim', f => { const e=estado[f.properties.codigo]; return lista!=='0' && e && !enLista(e[2]); });
-  $('banner').innerHTML = `<div class="stat"><div class="num">${fmt(dm)}</div><div class="lbl">Muertes</div></div>
-    <div class="stat"><div class="num">${fmt(di)}</div><div class="lbl">Intentos notificados</div></div>
-    <div class="stat"><div class="num">${r!==null?r.toFixed(1):'—'}</div><div class="lbl">Intentos por muerte (Cundinamarca)</div></div>
+  $('banner').innerHTML = `<div class="stat"><div class="num">${fmt(di)}</div><div class="lbl">Intentos notificados</div></div>
+    <div class="stat"><div class="num">${fmt(dm)}</div><div class="lbl">Muertes</div></div>
+    <div class="stat"><div class="num">${r!==null?dec(r):'—'}</div><div class="lbl">Intentos por muerte (Cundinamarca)</div></div>
     <div class="stat"><div class="num">${cnt[1]+cnt[2]}</div><div class="lbl">Municipios en rojo o naranja</div></div>`;
   $('aviso').style.display = ($('sex').value!=='Total' || $('edad').value!=='Todos') ? 'block' : 'none';
   const legSel = {'12':[1,2],'3':[3],'4':[4],'5':[5],'0':[1,2,3,4,5]}[lista];
@@ -123,14 +124,14 @@ function render(){
   rows.sort((a,b)=> a[1][2]-b[1][2] || ((a[1][0]?a[1][1]/a[1][0]:1e9)-(b[1][0]?b[1][1]/b[1][0]:1e9)) || a[0].localeCompare(b[0]));
   const titulo = {'12':'Municipios para revisar la notificación','3':'Municipios en amarillo (vigilar)','4':'Municipios en verde','5':'Municipios sin muertes en el periodo','0':'Municipios por semaforización'}[lista];
   $('list').innerHTML = `<h3>${titulo} (${rows.length})</h3>` + (rows.length ?
-    `<div class="scroll"><table><tr><th>Municipio</th><th>Muertes</th><th>Intentos</th><th>Razón</th></tr>` +
-    rows.map(([m,e])=>`<tr><td><span class="sw" style="background:${CAT[e[2]][1]}"></span> ${m}</td><td>${e[0]}</td><td>${e[1]}</td><td>${e[0]?(e[1]/e[0]).toFixed(1):'—'}</td></tr>`).join('') + `</table></div>`
+    `<div class="scroll"><table><tr><th>Municipio</th><th>Intentos</th><th>Muertes</th><th>Razón</th></tr>` +
+    rows.map(([m,e])=>`<tr><td><span class="sw" style="background:${CAT[e[2]][1]}"></span> ${m}</td><td>${fmt(e[1])}</td><td>${fmt(e[0])}</td><td>${e[0]?dec(e[1]/e[0]):'—'}</td></tr>`).join('') + `</table></div>`
     : '<p style="font-size:.78rem">Ningún municipio en esta categoría.</p>');
 }
 const tip=$('tip');
 paths.on('mousemove',(ev,f)=>{ const cod=f.properties.codigo, e=estado[cod], inf=INFO[cod]; if(!e||!inf) return; const card=$('mapcard').getBoundingClientRect();
   tip.style.display='block'; tip.style.left=(ev.clientX-card.left+12)+'px'; tip.style.top=(ev.clientY-card.top+12)+'px';
-  tip.innerHTML=`<b>${inf[0]}</b><br>${inf[1]} · ${inf[2]}<br>Muertes: <b>${e[0]}</b> · Intentos: <b>${e[1]}</b><br>Razón: <b>${e[0]?(e[1]/e[0]).toFixed(1):'—'}</b> intentos por muerte<br><span style="color:${CAT[e[2]][1]}">●</span> ${CAT[e[2]][0]}`; })
+  tip.innerHTML=`<b>${inf[0]}</b><br>${inf[1]} · ${inf[2]}<br>Intentos: <b>${fmt(e[1])}</b> · Muertes: <b>${fmt(e[0])}</b><br>Razón: <b>${e[0]?dec(e[1]/e[0]):'—'}</b> intentos por muerte<br><span style="color:${CAT[e[2]][1]}">●</span> ${CAT[e[2]][0]}`; })
  .on('mouseleave',()=>tip.style.display='none');
 ['per','sex','edad','lista'].forEach(id=>$(id).addEventListener('change',render));
 render();
