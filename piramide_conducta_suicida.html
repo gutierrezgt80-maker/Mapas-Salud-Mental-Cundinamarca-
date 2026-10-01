@@ -39,6 +39,7 @@ const ETIQ = {'2021-2025':'2021–2025 (acumulado)','2019-2025':'2019–2025 (ac
 let cur = '2021-2025';
 const $ = id => document.getElementById(id);
 const fmt = n => n.toLocaleString('es-CO');
+const dec = x => x.toLocaleString('es-CO',{minimumFractionDigits:2,maximumFractionDigits:2});
 PER.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=ETIQ[p]||p;if(p===cur)o.selected=true;$('per').appendChild(o);});
 (function(){const t=$('terr');const o=document.createElement('option');o.value='D';o.textContent='Cundinamarca';t.appendChild(o);
  const pref={'Regiones de salud':'R|','Provincias':'P|','Municipios':'M|'};
@@ -57,10 +58,10 @@ function render(){
   <text x="${cx}" y="200" text-anchor="middle" font-size="15" font-weight="700" fill="#3c3489">Intentos notificados</text>
   <text x="${cx}" y="222" text-anchor="middle" font-size="14" fill="#3c3489">${fmt(i)}</text>
   <line x1="${cx+95}" y1="125" x2="${cx+180}" y2="125" stroke="#888" stroke-dasharray="3 3"/>
-  <text x="${cx+188}" y="121" font-size="13" fill="#1b2530" font-weight="700">${r!==null?r.toFixed(1):'—'} intentos por muerte</text>
-  <text x="${cx+188}" y="139" font-size="12" fill="#5b6b7a">Cundinamarca: ${rref!==null?rref.toFixed(1):'—'}</text>`;
+  <text x="${cx+188}" y="121" font-size="13" fill="#1b2530" font-weight="700">${r!==null?dec(r):'—'} intentos por muerte</text>
+  <text x="${cx+188}" y="139" font-size="12" fill="#5b6b7a">Cundinamarca: ${rref!==null?dec(rref):'—'}</text>`;
   $('aviso').style.display = (m>0 && m<5) ? 'block' : 'none';
-  const H=val(p,t,'Hombre',g), M=val(p,t,'Mujer',g); const rr=a=>a[0]?(a[1]/a[0]).toFixed(1):'—';
+  const H=val(p,t,'Hombre',g), M=val(p,t,'Mujer',g); const rr=a=>a[0]?dec(a[1]/a[0]):'—';
   $('cmp').innerHTML=`<div><span>Hombres</span><b>${rr(H)}</b><span>intentos por muerte</span></div>
    <div><span>Mujeres</span><b>${rr(M)}</b><span>intentos por muerte</span></div>
    <div><span>Muertes en hombres</span><b>${H[0]+M[0]?Math.round(100*H[0]/(H[0]+M[0]))+'%':'—'}</b><span>del total de muertes</span></div>
