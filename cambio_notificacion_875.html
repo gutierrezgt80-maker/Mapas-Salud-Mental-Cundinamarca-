@@ -21,7 +21,7 @@ path.mun{stroke:#2b3440;stroke-width:.5;cursor:pointer}path.mun:hover{stroke-wid
 .side{position:relative;min-height:300px}.sidein{position:absolute;inset:10px;display:flex;flex-direction:column}@media(max-width:820px){.side{position:static}.sidein{position:static}}
 .legend{display:grid;grid-template-columns:1fr 1fr;gap:2px 8px;margin-bottom:8px}.legend div{display:flex;align-items:center;gap:6px;font-size:.72rem;padding:3px 4px;border-radius:6px;cursor:pointer}.legend div:hover{background:#eef1f4}.legend div.sel{background:#e6f1fb}
 .sw{width:13px;height:13px;border-radius:3px;flex:none;border:1px solid #9aa4ae;display:inline-block;vertical-align:middle}
-.tabs{display:flex;gap:4px;margin:2px 0 6px}.tabs button{flex:1;border:1px solid #d7dce1;background:#fff;border-radius:8px;padding:6px 4px;font-size:.74rem;font-weight:700;color:var(--muted);cursor:pointer}.tabs button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tabs{display:flex;gap:4px;margin:2px 0 6px}.tabs button{flex:1;border:1px solid #d7dce1;background:#fff;border-radius:8px;padding:6px 3px;font-size:.72rem;font-weight:700;color:var(--muted);cursor:pointer}.tabs button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
 .list{flex:1;min-height:0;display:flex;flex-direction:column}.scroll{flex:1;min-height:0;overflow-y:auto}@media(max-width:820px){.scroll{max-height:380px}}
 .list table{width:100%;border-collapse:collapse;font-size:.74rem}.list td,.list th{padding:4px 5px;border-bottom:1px solid #eef1f4;text-align:right}.list td:first-child,.list th:first-child{text-align:left}.list th{color:var(--muted);font-weight:600;position:sticky;top:0;background:#fff}
 .tip{position:absolute;pointer-events:none;background:#fff;border:1px solid #d7dce1;border-radius:8px;padding:8px 10px;font-size:.76rem;box-shadow:0 2px 8px rgba(0,0,0,.12);display:none;min-width:200px;z-index:5}
@@ -42,11 +42,11 @@ details{margin-top:10px;background:#fff;border-radius:10px;padding:8px 14px;box-
 <div class="aviso" id="aviso">Con estos filtros hay pocos casos: los cambios pueden deberse al azar. Leer siempre junto al número de casos.</div>
 <div class="grid"><div class="card" id="mapcard"><svg id="map" viewBox="0 0 700 620"></svg><div class="tip" id="tip"></div></div>
 <div class="card side"><div class="sidein"><div class="legend" id="legend"></div>
-<div class="tabs" id="tabs"><button data-t="up" class="on">Aumentos</button><button data-t="down">Disminuciones</button><button data-t="sil">Silencio</button></div>
+<div class="tabs" id="tabs"><button data-t="up" class="on">Aumentos</button><button data-t="down">Disminuciones</button><button data-t="est">Estables</button><button data-t="sil">Silencio</button></div>
 <div class="list"><div class="scroll" id="list"></div></div></div></div></div>
 <details><summary>ⓘ ¿Cómo leer este mapa?</summary>
 Compara los casos notificados en el año en curso con el año anterior (o con el promedio de los 3 años anteriores) en el mismo corte de periodos epidemiológicos.
-Un aumento puede reflejar más casos o mejor captación; una disminución puede reflejar menos casos o fallas en la notificación. <b>Silencio</b>: el territorio tenía casos en la comparación y no ha notificado ninguno en el año en curso; es la señal prioritaria para revisar con las UPGD.
+Un aumento puede reflejar más casos o mejor captación; una disminución puede reflejar menos casos o fallas en la notificación. <b>Estable</b>: el cambio es menor al 5%, hacia arriba o hacia abajo. <b>Silencio</b>: el territorio tenía casos en la comparación y no ha notificado ninguno en el año en curso; es la señal prioritaria para revisar con las UPGD.
 Categorías: aumento o disminución <b>importante</b> si el cambio es de al menos 20% y 3 casos; <b>leve</b> si es de al menos 5%; <b>estable</b> en los demás casos. Con promedios, los casos de comparación pueden tener decimales.</details>
 <details><summary>ⓘ Fuentes y criterios</summary>
 Fuente: SIVIGILA, evento Violencia de género e intrafamiliar (875), municipio de residencia. Corte por periodo epidemiológico (4 semanas) del año en curso aplicado igual a los años de comparación.
@@ -156,10 +156,12 @@ function draw(){
   paths.attr('fill', f=>{ const o=res[keyOf(f.properties.codigo)]; return o?CAT[o.c][1]:'#eee'; })
        .classed('dim', f=>{ const o=res[keyOf(f.properties.codigo)]; return catSel!==null && o && o.c!==catSel; });
   $('legend').innerHTML = Object.entries(CAT).filter(([k])=>k!=='8'||cnt[8]).map(([k,[l,c]])=>`<div data-k="${k}" class="${catSel===+k?'sel':''}"><span class="sw" style="background:${c}"></span>${l} <b>(${cnt[k]||0})</b></div>`).join('');
-  document.querySelectorAll('.legend div').forEach(x=>x.onclick=()=>{ const k=+x.dataset.k; catSel = catSel===k?null:k; draw(); });
+  document.querySelectorAll('.legend div').forEach(x=>x.onclick=()=>{ const k=+x.dataset.k; catSel = catSel===k?null:k;
+    if (catSel!==null) setTab({1:'up',2:'up',7:'up',3:'est',4:'down',5:'down',6:'sil',8:'est'}[catSel]); draw(); });
   let rows = Object.entries(res).map(([k,o])=>[nameOf(k),o]);
   if (tab==='up') rows = rows.filter(([,o])=>o.a-o.b>0 && (o.c===1||o.c===2||o.c===7)).sort((x,y)=>(y[1].a-y[1].b)-(x[1].a-x[1].b));
   else if (tab==='down') rows = rows.filter(([,o])=>o.a-o.b<0 && (o.c===4||o.c===5||o.c===6)).sort((x,y)=>(x[1].a-x[1].b)-(y[1].a-y[1].b));
+  else if (tab==='est') rows = rows.filter(([,o])=>o.c===3 || (catSel===8 && o.c===8)).sort((x,y)=>y[1].a-x[1].a);
   else rows = rows.filter(([,o])=>o.c===6).sort((x,y)=>y[1].b-x[1].b);
   if (catSel!==null) rows = rows.filter(([,o])=>o.c===catSel);
   const etqB = $('comp').value==='ant' ? ANIOS[2] : 'Prom.';
@@ -175,7 +177,8 @@ paths.on('mousemove',(ev,f)=>{ const cod=f.properties.codigo, k=keyOf(cod), o=re
   tip.innerHTML=`<b>${nameOf(k)}</b>${nivel===0?`<br>${INFO[cod][1]} · ${INFO[cod][2]}`:''}<br>Comparación: <b>${fmt(o.b)}</b> · ${ANIOS[3]}: <b>${fmt(o.a)}</b><br>Diferencia: <b>${d>0?'+':''}${fmt(d)}</b>${o.b?` (${dec(d/o.b*100)}%)`:''}<br><span style="color:${CAT[o.c][1]}">●</span> ${CAT[o.c][0]}`; })
  .on('mouseleave',()=>tip.style.display='none');
 document.querySelectorAll('#niv button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('#niv button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); nivel=+b.dataset.n; catSel=null; render(); });
-document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{ document.querySelectorAll('#tabs button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); tab=b.dataset.t; draw(); });
+function setTab(t){ tab=t; document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on', x.dataset.t===t)); }
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{ catSel=null; setTab(b.dataset.t); draw(); });
 ['corte','comp','sex','cur','ext'].forEach(id=>$(id).addEventListener('change',()=>{catSel=null;render();}));
 render();
 </script></body></html>
