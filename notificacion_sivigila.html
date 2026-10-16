@@ -21,9 +21,10 @@
   .control-group button:hover:not(.active) { background: #eef1f4; }
   select { border: 1px solid #d7dce1; border-radius: 8px; padding: 8px 8px; font-size: .76rem; font-weight: 600;
     color: var(--ink); background: white; cursor: pointer; }
-  #evSelect { max-width: 210px; } #procSelect { max-width: 175px; }
-  .stat-banner { background: white; border-radius: 10px; padding: 14px 18px; display: flex; gap: 28px; margin-bottom: 14px;
+  #evSelect { max-width: 210px; } #indSelect { max-width: 200px; }
+  .stat-banner { background: white; border-radius: 10px; padding: 10px 18px; display: flex; gap: 28px; margin-bottom: 14px;
     flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .stat { max-width: 165px; }
   .stat .num { font-size: 1.3rem; font-weight: 800; color: var(--navy); line-height: 1.1; }
   .stat .lbl { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
   .map-card { background: white; border-radius: 10px; padding: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); position: relative; }
@@ -32,7 +33,7 @@
   path.mun:hover { filter: brightness(1.15); stroke: var(--navy-deep); stroke-width: 1.4; }
   .tooltip { position: absolute; pointer-events: none; background: var(--navy-deep); color: white; padding: 9px 12px;
     border-radius: 8px; font-size: .76rem; box-shadow: 0 4px 14px rgba(0,0,0,0.25); opacity: 0; transition: opacity .1s;
-    max-width: 240px; z-index: 10; }
+    max-width: 280px; z-index: 10; }
   .tooltip b { color: var(--accent-gold); font-size: .82rem; }
   .tooltip .row { display: flex; justify-content: space-between; gap: 10px; margin-top: 3px; }
   .legend { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: .72rem; color: var(--muted); padding: 0 6px; }
@@ -54,11 +55,9 @@
     </div>
     <select id="yearSelect" title="Año"></select>
     <select id="evSelect" title="Evento"><option value="-1">Todos los eventos</option></select>
-    <select id="procSelect" title="Procedencia del caso">
-      <option value="all">Procedencia: todos</option><option value="0">Residentes del municipio</option>
-      <option value="ext">De fuera del municipio</option><option value="1">De otro municipio de Cundinamarca</option>
-      <option value="fc">De fuera de Cundinamarca</option><option value="2">De Bogotá, D.C.</option>
-      <option value="3">De otro departamento</option><option value="4">De otro país</option></select>
+    <select id="indSelect" title="Colorear el mapa por">
+      <option value="t">Notificados x 100.000 hab.</option><option value="c">Número de casos</option>
+      <option value="f">% de fuera del municipio</option></select>
     <select id="sexSelect" title="Sexo"><option value="-1">Ambos sexos</option><option value="0">Hombre</option><option value="1">Mujer</option></select>
   </div>
   <div class="stat-banner" id="statBanner"></div>
@@ -149,34 +148,34 @@ function renderBoundaries() {
 }
 const keyM = i => nivel === 0 ? i : INFO[i][nivel];
 const nameK = k => nivel === 0 ? INFO[k][0] : k;
-const procOk = (p, f) => f === 'all' || (f === 'ext' ? (p >= 1 && p <= 4) : f === 'fc' ? (p >= 2 && p <= 4) : p === +f);
 let res = {};
 function render() {
-  const ai = +$('yearSelect').value, ev = +$('evSelect').value, pf = $('procSelect').value, sx = +$('sexSelect').value;
-  const acc = {}; let cA = 0, cAll = 0, cFuera = 0, pobT = 0;
-  CODS.forEach((c, i) => { const k = keyM(i); if (!acc[k]) acc[k] = {c: 0, p: 0, all: 0, fuera: 0};
+  const ai = +$('yearSelect').value, ev = +$('evSelect').value, ind = $('indSelect').value, sx = +$('sexSelect').value;
+  const acc = {}; let cA = 0, cFuera = 0, pobT = 0;
+  CODS.forEach((c, i) => { const k = keyM(i); if (!acc[k]) acc[k] = {c: 0, p: 0, res: 0, otro: 0, fc: 0, sd: 0};
     const pp = P[ai][i]; const v = sx < 0 ? pp[0] + pp[1] : pp[sx]; acc[k].p += v; pobT += v; });
   for (const [m, a, e, p, s, n] of R) {
     if (a !== ai || (ev >= 0 && e !== ev) || (sx >= 0 && s !== sx)) continue;
-    cAll += n; const fu = p >= 1 && p <= 4; if (fu) cFuera += n;
-    const ok = procOk(p, pf); if (ok) cA += n;
-    if (m < 0) continue; const o = acc[keyM(m)]; o.all += n; if (fu) o.fuera += n; if (ok) o.c += n;
+    cA += n; if (p >= 1 && p <= 4) cFuera += n;
+    if (m < 0) continue; const o = acc[keyM(m)]; o.c += n;
+    if (p === 0) o.res += n; else if (p === 1) o.otro += n; else if (p <= 4) o.fc += n; else o.sd += n;
   }
-  Object.values(acc).forEach(o => { o.t = o.p > 0 ? o.c / o.p * 1e5 : 0; o.pf = o.all ? o.fuera / o.all * 100 : null; });
+  Object.values(acc).forEach(o => { o.t = o.p > 0 ? o.c / o.p * 1e5 : 0; o.pf = o.c ? (o.otro + o.fc) / o.c * 100 : 0; });
   res = acc;
-  const vals = Object.values(acc).map(o => o.t).filter(v => v > 0).sort((x, y) => x - y);
+  const val = o => ind === 't' ? o.t : ind === 'c' ? o.c : o.pf;
+  const vals = Object.values(acc).map(val).filter(v => v > 0).sort((x, y) => x - y);
   const maxV = vals.length ? vals[Math.floor((vals.length - 1) * 0.9)] : 1;
   const color = d3.scaleSequential(d3.interpolateBlues).domain([0, maxV || 1]).clamp(true);
-  paths.attr('fill', f => { const v = acc[keyM(ci[f.properties.codigo])].t; return v > 0 ? color(v) : '#e2e5e9'; });
+  paths.attr('fill', f => { const v = val(acc[keyM(ci[f.properties.codigo])]); return v > 0 ? color(v) : '#e2e5e9'; });
   $('legendBar').style.background = `linear-gradient(90deg, ${color(0)}, ${color(maxV || 1)})`;
-  $('legendMax').textContent = ent(maxV) + '+ x100k';
+  $('legendMax').textContent = ind === 't' ? ent(maxV) + '+ x100k' : ind === 'c' ? ent(maxV) + '+ casos' : pct(maxV) + '+';
   const a = ANIOS[ai], evn = ev >= 0 ? EVENTOS[ev] : 'Todos los eventos';
-  $('sub').textContent = `Casos notificados por cada 100.000 habitantes — ${evn} — municipio de notificación`;
+  $('sub').textContent = `${ind === 't' ? 'Casos notificados por cada 100.000 habitantes' : ind === 'c' ? 'Número de casos notificados' : 'Porcentaje de casos notificados de personas que viven fuera del municipio'} — ${evn} — municipio de notificación`;
   $('statBanner').innerHTML = `
     <div class="stat"><div class="num">${ent(cA)}</div><div class="lbl">Casos notificados ${a}${a === AACT ? ` (SE 1–${SEACT})` : ''}</div></div>
     <div class="stat"><div class="num">${ent(pobT)}</div><div class="lbl">Población</div></div>
     <div class="stat"><div class="num">${dec2(cA / pobT * 1e5)}</div><div class="lbl">Notificados x 100.000 hab.</div></div>
-    <div class="stat"><div class="num">${cAll ? pct(cFuera / cAll * 100) : '—'}</div><div class="lbl">De fuera del municipio que notifica</div></div>`;
+    <div class="stat"><div class="num">${cA ? pct(cFuera / cA * 100) : "—"}</div><div class="lbl">De fuera del municipio que notifica</div></div>`;
   $('foot').innerHTML = `Carga de notificación de las UPGD (incluye descartados y personas de otros lugares), no incidencia del evento${a === AACT ? ` · ${AACT} preliminar` : ''}.<br>Fuente: SIVIGILA, datos básicos (Secretaría de Salud de Cundinamarca) · Población DANE, junio 2025 · Límites: DANE MGN 2018`;
 }
 const tooltip = $('tooltip');
@@ -187,12 +186,15 @@ paths.on('mousemove', function (event, f) {
     <div class="row"><span>Casos notificados</span><span>${ent(o.c)}</span></div>
     <div class="row"><span>Población</span><span>${ent(o.p)}</span></div>
     <div class="row"><span>Notificados x 100.000</span><span>${dec2(o.t)}</span></div>
-    <div class="row"><span>De fuera del municipio</span><span>${o.pf === null ? '—' : pct(o.pf)}</span></div>`;
+    <div style="border-top:1px solid rgba(255,255,255,.2);margin-top:5px;padding-top:3px;color:#b8c4d0;font-size:.68rem">Procedencia (residencia)</div>
+    <div class="row"><span>Residentes${nivel === 0 ? ' del municipio' : ' del mismo municipio'}</span><span>${ent(o.res)}${o.c ? ' · ' + pct(o.res / o.c * 100) : ''}</span></div>
+    <div class="row"><span>Otro municipio de Cund.</span><span>${ent(o.otro)}${o.c ? ' · ' + pct(o.otro / o.c * 100) : ''}</span></div>
+    <div class="row"><span>Fuera de Cundinamarca</span><span>${ent(o.fc)}${o.c ? ' · ' + pct(o.fc / o.c * 100) : ''}</span></div>`;
 }).on('mouseleave', () => { tooltip.style.opacity = 0; });
 $('levelGroup').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
   document.querySelectorAll('#levelGroup button').forEach(x => x.classList.remove('active')); b.classList.add('active');
   nivel = +b.dataset.n; render(); renderBoundaries(); });
-['yearSelect', 'evSelect', 'procSelect', 'sexSelect'].forEach(id => $(id).addEventListener('change', render));
+['yearSelect', 'evSelect', 'indSelect', 'sexSelect'].forEach(id => $(id).addEventListener('change', render));
 render(); renderBoundaries();
 </script>
 </body>
